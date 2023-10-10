@@ -1,0 +1,33 @@
+I. Setting up your pipeline
+	-Your data directory is: /home/leem/001_projects/epic_somalogic_crc/analysis/001_phenofile/cancer/male/
+	- Your metabolite data file is: proteins.txt
+		Your metabolite data file was identified as a previously processed flat text file.
+	- You have NOT provided a feature annotation file to process.
+	- You have NOT provided a sample | batch annotation file to process.
+	- Your declared platform is: Other
+	- Feature filtering: Your declared feature missingness level is: 0.2
+	- Sample filtering: Your declared sample missingness level is: 0.2
+	- Sample filtering: Your declared total peak area filter level, in standard deviations from the mean is: 5
+	- Sample outliers at features: Your declared that the interquartile range unit distance from the median of each feature to call a sample an outlier to be: 5
+	- Sample outliers at features: Your declared that outliers, for the purposes of the PCA & PCA only, should be: leave_be
+	- Metabolite independence: Your declared tree cut height is: 0.5
+
+	- Sample filtering: Your declared principal component (PC1 and PC2) exclusion, in standard deviations from the mean is: 5
+	- You have declared that a scatter plot, histogram, and table of summary statsitic for each feature in the data set should be written to pdf.
+	- Reading in your txt|tsv metabolite file
+III. Your data has been read in.
+
+	-Your data has 396 individuals and 7596 metabolites.
+
+	-There are also 1 sample annotation|batch variables.
+
+	-There are also 1 feature annotation|batch variables.
+
+IV. Estimating Summary Statistics On Raw Data Set.
+	a. Estimating summary statistics for samples
+			- z-transformed data for total abundance estimation.
+			- adding absolute minimum observed value to all values to make all values positive.
+		- Writing sample summary statistics to file.
+	b. Estimating summary statistics for features.
+		- Estimating the number of indpendent features.
+			- Generating Correlation Matrix.

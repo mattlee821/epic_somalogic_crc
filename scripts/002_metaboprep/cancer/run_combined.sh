@@ -21,23 +21,9 @@ OUT=/home/leem/001_projects/epic_somalogic_crc/analysis/002_metaboprep/
 # generate_report( full_path_2_Rdatafile = rdfile, dir_4_report = output_dir_path )
 # when finished, copy over the new html report from metaboprep directory AND in the script location the new .md file and the figures/
 
-# complete
-cd ${DATA}/complete
-Rscript ${SCRIPT} ${DATA}complete/parameter_file.txt
-mv ${IN}complete/metaboprep* ${OUT}complete/
-mv ${DATA}complete/figure/ ${OUT}complete/
-mv ${DATA}complete/metaboprep* ${OUT}complete/
-
 # cancer
 cd ${DATA}/cancer
-Rscript ${SCRIPT} ${DATA}cancer/parameter_file.txt
-mv ${IN}cancer/metaboprep* ${OUT}cancer/
-mv ${DATA}cancer/figure/ ${OUT}cancer/
-mv ${DATA}cancer/metaboprep* ${OUT}cancer/
-
-# non-cancer
-cd ${DATA}/non-cancer
-Rscript ${SCRIPT} ${DATA}non-cancer/parameter_file.txt
-mv ${IN}non-cancer/metaboprep* ${OUT}non-cancer/
-mv ${DATA}non-cancer/figure/ ${OUT}non-cancer/
-mv ${DATA}non-cancer/metaboprep* ${OUT}non-cancer/
+Rscript ${SCRIPT} ${DATA}cancer/parameter_file_combined.txt
+mv ${IN}cancer/metaboprep* ${OUT}cancer/combined/
+mv ${DATA}cancer/figure/ ${OUT}cancer/combined/
+mv ${DATA}cancer/metaboprep* ${OUT}cancer/combined/

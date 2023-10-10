@@ -6,7 +6,7 @@
 ## (1) Name of your project
 projectname=epic_proteomics_somalogic_complete
 ## (2) Full path to the directory holding your data file(s)
-datadirectory=/home/leem/001_projects/epic_somalogic_crc/analysis/001_phenofile/complete/
+datadirectory=/home/leem/001_projects/epic_somalogic_crc/analysis/001_phenofile/cancer/female/
 ## (3) Metabolite or Protien data file name
 ##				- Could be:
 ##				  1. Commercially provided excel sheet from Metabolon or Nightingale. 
