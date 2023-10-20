@@ -6,15 +6,22 @@ library(dplyr)
 library(haven)
 
 # data ====
-data <- readRDS("data/Data/ForAnalysis_cancer.rds")
+data <- readRDS("/data/Epic/subprojects/Somalogic/work/Vivian/MultiEndpoints/Data/ForAnalyses/cancer_NormalizedSoma_InvRank_noSMP.rds")
 data <- data %>%
   mutate(across(where(~ is.labelled(.)), as_factor))
 
 ## exclusions ====
-data <- subset(data, rowcheck == "PASS") # remove samples that are FLAGGED = 112
-data <- data[is.na(data$samplenotes), ] # remove samples with sample notes = 36
-data <- data[is.na(data$assaynotes), ] # remove samples with assay notes = 113
-data <- subset(data, why_del == "") # remove samples with a reason for exclusion = 179
+nrow(data) - nrow(subset(data, rowcheck == "PASS"))
+data <- subset(data, rowcheck == "PASS") # remove samples that are FLAGGED = 0
+
+nrow(data) - sum(is.na(data$samplenotes))
+data <- data[is.na(data$samplenotes), ] # remove samples with sample notes = 61
+
+nrow(data) - sum(is.na(data$assaynotes))
+data <- data[is.na(data$assaynotes), ] # remove samples with assay notes = 119
+
+nrow(data) - nrow(subset(data, why_del == ""))
+data <- subset(data, why_del == "") # remove samples with a reason for exclusion = 192
 
 # select columns ====
 columns_covariates <- c(
@@ -76,103 +83,128 @@ data <- data %>%
   select(any_of(c(columns_covariates, columns_cancer, columns_plate)),
          contains("seq"))
 
-# subset for colorectal cancer and non-cases ====
-data_cancer <- subset(data, cncr_mal_clrt == "Incident")
-data_cancer <- droplevels(data_cancer)
-table(data_cancer$cancer_1st_sit_tumo)
-
-data_control <- subset(data, cncr_mal_anyc == "Non-case")
-data_control <- droplevels(data_control)
-table(data_control$cancer_1st_sit_tumo)
-data_control <- subset(data_control, cancer_1st_sit_tumo == "") # remove all individuals coded with a cancer site
-
-data <- bind_rows(data_cancer, data_control)
-data <- droplevels(data)
-
 # convert sex: Female=1 and Male=2 ====
 data <- data %>%
   mutate(sex = ifelse(sex == "Female", 1, 2))
 
+# subset for cases and non-cases ====
+data_cancer <- subset(data, cncr_mal_clrt == "Incident")
+data_cancer <- droplevels(data_cancer)
+data_control <- subset(data, cncr_mal_anyc == "Non-case")
+data_control <- droplevels(data_control)
+data_control <- subset(data_control, cancer_1st_sit_tumo == "") # remove all individuals coded with a cancer site
+data <- bind_rows(data_cancer, data_control)
+data <- droplevels(data)
+
+# subset for subtypes 
+data_cancer_colon <- subset(data_cancer, cncr_mal_clrt_colon == "Incident")
+data_colon <- bind_rows(data_cancer_colon, data_control)
+data_cancer_rectum <- subset(data_cancer, cncr_mal_clrt_rectum == "Incident")
+data_rectum <- bind_rows(data_cancer_rectum, data_control)
+data_cancer_eo <- subset(data_cancer, ageevent < 55)
+data_control_eo <- subset(data_control, age < 55)
+data_control_eo <- data_control_eo %>% # change age of exit to 55 for controls
+  mutate(age_exit_cancer_1st = ifelse(age_exit_cancer_1st > 55, 55, age_exit_cancer_1st))
+data_eo <- bind_rows(data_cancer_eo, data_control_eo)
+
 # save ====
 ## combined ====
-write.table(data, "analysis/001_phenofile/complete/combined/phenofile.txt", 
+write.table(data, "analysis/001_phenofile/complete/combined/overall/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 data_proteins <- data %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/complete/combined/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/combined/overall/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_cancer <- subset(data, cncr_mal_clrt == "Incident")
-write.table(data_cancer, "analysis/001_phenofile/cancer/combined/phenofile.txt", 
+write.table(data_colon, "analysis/001_phenofile/complete/combined/colon/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_cancer %>%
+data_proteins <- data_colon %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/cancer/combined/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/combined/colon/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_control <- subset(data, cncr_mal_anyc == "Non-case")
-write.table(data_control, "analysis/001_phenofile/non-cancer/combined/phenofile.txt", 
+write.table(data_rectum, "analysis/001_phenofile/complete/combined/rectum/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_control %>%
+data_proteins <- data_rectum %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/non-cancer/combined/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/combined/rectum/proteins.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+
+write.table(data_eo, "analysis/001_phenofile/complete/combined/early_onset/phenofile.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+data_proteins <- data_eo %>%
+  select(idepic,
+         contains("seq"))
+write.table(data_proteins, "analysis/001_phenofile/complete/combined/early_onset/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
 ## female ====
 data_female <- subset(data, sex == 1)
-write.table(data_female, "analysis/001_phenofile/complete/female/phenofile.txt", 
+write.table(data_female, "analysis/001_phenofile/complete/female/overall/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 data_proteins <- data_female %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/complete/female/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/female/overall/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_cancer <- subset(data_female, cncr_mal_clrt == "Incident")
-write.table(data_cancer, "analysis/001_phenofile/cancer/female/phenofile.txt", 
+write.table(data_female, "analysis/001_phenofile/complete/female/colon/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_cancer %>%
+data_proteins <- data_female %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/cancer/female/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/female/colon/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_control <- subset(data_female, cncr_mal_anyc == "Non-case")
-write.table(data_control, "analysis/001_phenofile/non-cancer/female/phenofile.txt", 
+write.table(data_female, "analysis/001_phenofile/complete/female/rectum/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_control %>%
+data_proteins <- data_female %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/non-cancer/female/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/female/rectum/proteins.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+
+write.table(data_female, "analysis/001_phenofile/complete/female/early_onset/phenofile.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+data_proteins <- data_female %>%
+  select(idepic,
+         contains("seq"))
+write.table(data_proteins, "analysis/001_phenofile/complete/female/early_onset/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
 ## male ====
 data_male <- subset(data, sex == 2)
-write.table(data_male, "analysis/001_phenofile/complete/male/phenofile.txt", 
+write.table(data_male, "analysis/001_phenofile/complete/male/overall/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 data_proteins <- data_male %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/complete/male/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/male/overall/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_cancer <- subset(data_male, cncr_mal_clrt == "Incident")
-write.table(data_cancer, "analysis/001_phenofile/cancer/male/phenofile.txt", 
+write.table(data_male, "analysis/001_phenofile/complete/male/colon/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_cancer %>%
+data_proteins <- data_male %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/cancer/male/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/male/colon/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
-data_control <- subset(data_male, cncr_mal_anyc == "Non-case")
-write.table(data_control, "analysis/001_phenofile/non-cancer/male/phenofile.txt", 
+write.table(data_male, "analysis/001_phenofile/complete/male/rectum/phenofile.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
-data_proteins <- data_control %>%
+data_proteins <- data_male %>%
   select(idepic,
          contains("seq"))
-write.table(data_proteins, "analysis/001_phenofile/non-cancer/male/proteins.txt", 
+write.table(data_proteins, "analysis/001_phenofile/complete/male/rectum/proteins.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+
+write.table(data_male, "analysis/001_phenofile/complete/male/early_onset/phenofile.txt", 
+            row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
+data_proteins <- data_male %>%
+  select(idepic,
+         contains("seq"))
+write.table(data_proteins, "analysis/001_phenofile/complete/male/early_onset/proteins.txt", 
             row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
